@@ -1,0 +1,20 @@
+{
+    "name": "ezeksoft/rocketzap",
+    "description": "Send WhatsApp messages with RocketZap",
+    "type": "library",
+    "license": "MIT",
+    "authors": [
+        {
+            "name": "Ezequiel",
+            "email": "ezequielmoraesdev@gmail.com"
+        }
+    ],
+    "require": {
+        "php": "^8.0"
+    },
+	"autoload": {
+		"psr-4": {
+			"Ezeksoft\\RocketZap\\": "src/"
+		}
+	}
+}
