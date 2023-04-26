@@ -14,7 +14,7 @@ class Http
 
     public function __construct(string $endpoint="")
     {
-        $this->endpoint = $endpoint ?: "https://rocketzap.app/api";
+        $this->endpoint = $endpoint;
     }
 
     public function request(string $verb, string $resource, array $headers=[], string $body="") : Http

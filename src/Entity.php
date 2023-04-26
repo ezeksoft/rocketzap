@@ -8,6 +8,8 @@ use Ezeksoft\RocketZap\Entity\{Customer, Product, Merchant};
 
 class Entity
 {
+    private string $endpoint = "https://rocketzap.app/api";
+
     /** @var string */
     protected string $apiSecret = "";
 
