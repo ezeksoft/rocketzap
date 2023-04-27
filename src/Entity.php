@@ -4,54 +4,43 @@ namespace Ezeksoft\RocketZap;
 
 use Ezeksoft\RocketZap\Http;
 use Ezeksoft\RocketZap\Enum\{ProjectType, Event};
-use Ezeksoft\RocketZap\Entity\{Customer, Product, Merchant};
+use Ezeksoft\RocketZap\Entity\{Customer, Merchant, Product, Pix, Billet};
+use Ezeksoft\RocketZap\Exception\{CustomerRequiredException, EventRequiredException, ProductsRequiredException};
 
 class Entity
 {
+    /** @var string */
     private string $endpoint = "https://rocketzap.app/api";
 
     /** @var string */
-    protected string $apiSecret = "";
+    protected string $api_secret = "";
+
+    /** @var string */
+    protected string $payment_method = "";
 
     /** @var Customer */
     private Customer $customer;
 
-    /** @var Product */
-    private Product $product;
-
     /** @var Merchant */
     private Merchant $merchant;
+
+    /** @var Product */
+    private Product $product;
+    
+    /** @var array */
+    private array $product_list = [];
 
     /** @var Event */
     private Event $event;
     
-    /** @var array */
-    private array $product_list = [];
+    /** @var Pix */
+    private Pix $pix;
+    
+    /** @var Billet */
+    private Billet $billet;
     
     /** @var array */
     private array $returns = [];
-
-    /**
-     * Set key
-     *
-     * @param string $apiSecret
-     * @return Entity
-     */
-    public function setApiSecret(string $apiSecret="") : Entity
-    {
-        $this->apiSecret = $apiSecret;
-        return $this;
-    }
-
-    /**
-     * Get key
-     *
-     * @return string
-     */
-    protected function getApiSecret() : string
-    {
-        return $this->apiSecret;
-    }
 
     /**
      * Create new customer
@@ -84,37 +73,45 @@ class Entity
     }
 
     /**
-     * Set customer
+     * Create new pix
      *
-     * @param Customer $customer
+     * @return Pix
+     */
+    public function pix() : Pix
+    {
+        return new Pix; 
+    }
+
+    /**
+     * Create new billet
+     *
+     * @return Billet
+     */
+    public function billet() : Billet
+    {
+        return new Billet; 
+    }
+
+    /**
+     * Set key
+     *
+     * @param string $api_secret
      * @return Entity
      */
-    public function setCustomer(Customer $customer) : Entity
+    public function setApiSecret(string $api_secret="") : Entity
     {
-        $this->customer = $customer;
+        $this->api_secret = $api_secret;
         return $this;
     }
 
     /**
-     * Retrieve customer
+     * Get key
      *
-     * @return Customer
+     * @return string
      */
-    public function getCustomer() : Customer
+    protected function getApiSecret() : string
     {
-        return $this->customer;
-    }
-
-    /**
-     * Push product to a list
-     *
-     * @param Product $product
-     * @return Entity
-     */
-    public function addProduct(Product $product) : Entity
-    {
-        $this->product_list[] = $product;
-        return $this;
+        return $this->api_secret;
     }
 
     /**
@@ -139,6 +136,46 @@ class Entity
         return $this->payment_method;
     }
 
+    /** @return bool */
+    public function hasPaymentMethod()
+    {
+        return !empty($this->payment_method);
+    }
+
+    /** @return bool */
+    public function hasProducts()
+    {
+        return !empty($this->product_list);
+    }
+
+    /**
+     * Set customer
+     *
+     * @param Customer $customer
+     * @return Entity
+     */
+    public function setCustomer(Customer $customer) : Entity
+    {
+        $this->customer = $customer;
+        return $this;
+    }
+
+    /**
+     * Retrieve customer
+     *
+     * @return Customer
+     */
+    public function getCustomer() : Customer
+    {
+        return $this->customer;
+    }
+
+    /** @return bool */
+    public function hasCustomer()
+    {
+        return !empty($this->customer);
+    }
+
     /**
      * Set merchant
      *
@@ -159,6 +196,80 @@ class Entity
     public function getMerchant() : Merchant
     {
         return $this->merchant;
+    }
+
+    /** @return bool */
+    public function hasMerchant()
+    {
+        return !empty($this->merchant);
+    }
+
+    /**
+     * Push product to a list
+     *
+     * @param Product $product
+     * @return Entity
+     */
+    public function addProduct(Product $product) : Entity
+    {
+        $this->product_list[] = $product;
+        return $this;
+    }
+
+    /**
+     * Set pix
+     *
+     * @param Pix $pix
+     * @return Entity
+     */
+    public function setPix(Pix $pix) : Entity
+    {
+        $this->pix = $pix;
+        return $this;
+    }
+
+    /**
+     * Retrieve pix
+     *
+     * @return Pix
+     */
+    public function getPix() : Pix
+    {
+        return $this->pix;
+    }
+
+    /** @return bool */
+    public function hasPix()
+    {
+        return !empty($this->pix);
+    }
+
+    /**
+     * Set billet
+     *
+     * @param Billet $billet
+     * @return Entity
+     */
+    public function setBillet(Billet $billet) : Entity
+    {
+        $this->billet = $billet;
+        return $this;
+    }
+
+    /**
+     * Retrieve billet
+     *
+     * @return Billet
+     */
+    public function getBillet() : Billet
+    {
+        return $this->billet;
+    }
+
+    /** @return bool */
+    public function hasBillet()
+    {
+        return !empty($this->billet);
     }
 
     /**
@@ -184,6 +295,12 @@ class Entity
         return $this->event;
     }
 
+    /** @return bool */
+    public function hasEvent()
+    {
+        return !empty($this->event);
+    }
+
     /**
      * Retrieve mapping
      *
@@ -191,9 +308,11 @@ class Entity
      */
     public function getMapping() : object
     {
-        return (Object)
-        [
-            "payment_method" => $this->getPaymentMethod(),
+        if (!$this->hasEvent()) throw new EventRequiredException("Event is required.");
+        if (!$this->hasCustomer()) throw new CustomerRequiredException("Customer is required.");
+        if (!$this->hasProducts()) throw new ProductsRequiredException("Products are required.");
+
+        $required = [
             "event" => $this->getEvent(),
             "products" => array_map(fn($product) => 
                 (Object) 
@@ -202,7 +321,7 @@ class Entity
                         "name" => $product->getName(),
                         "price" => $product->getPrice()
                     ]
-            , $this->product_list),
+                , $this->product_list),
             "customer" => (Object)
                 [
                     "id" => $this->customer->getId(),
@@ -211,14 +330,33 @@ class Entity
                     "name" => $this->customer->getName(),
                     "email" => $this->customer->getEmail(),
                     "phone" => $this->customer->getPhone()
-                ],
-            "merchant" => (Object)
-                [
-                    "id" => $this->merchant->getId(),
-                    "name" => $this->merchant->getName(),
-                    "email" => $this->merchant->getEmail()
                 ]
         ];
+
+        $data = (Object) $required;
+
+        if ($this->hasPaymentMethod()) $this->payment_method = $this->getPaymentMethod();
+
+        if ($this->hasMerchant()) $data->merchant = (Object)
+        [
+            "id" => $this->merchant->getId(),
+            "name" => $this->merchant->getName(),
+            "email" => $this->merchant->getEmail()
+        ];
+
+        if ($this->hasPix()) $data->pix = (Object)
+        [
+            "text" => $this->pix->getText(),
+            "image" => $this->pix->getImage()
+        ];
+
+        if ($this->hasBillet()) $data->billet = (Object)
+        [
+            "text" => $this->billet->getText(),
+            "pdf" => $this->billet->getPdf()
+        ];
+
+        return $data;
     }
 
     /**
