@@ -87,7 +87,7 @@ class Http
         return json_encode($this->response ?? '{}');
     }
 
-    public function getResponse() : string
+    public function getText() : string
     {
         return $this->response;
     }

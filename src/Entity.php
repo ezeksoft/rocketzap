@@ -3,7 +3,7 @@
 namespace Ezeksoft\RocketZap;
 
 use Ezeksoft\RocketZap\Http;
-use Ezeksoft\RocketZap\Enum\{ProjectType, Event};
+use Ezeksoft\RocketZap\Enum\{ProjectType, Event, PaymentMethod};
 use Ezeksoft\RocketZap\Entity\{Customer, Merchant, Product, Pix, Billet, CreditCard, Order};
 use Ezeksoft\RocketZap\Exception\{CustomerRequiredException, EventRequiredException, ProductsRequiredException, OrderRequiredException};
 
@@ -16,7 +16,7 @@ class Entity
     protected string $api_secret = "";
 
     /** @var string */
-    protected string $payment_method = "";
+    private PaymentMethod $payment_method;
 
     /** @var Customer */
     private Customer $customer;
@@ -143,10 +143,10 @@ class Entity
     /**
      * Set payment method
      *
-     * @param string $payment_method
+     * @param PaymentMethod $payment_method
      * @return Entity
      */
-    public function setPaymentMethod(string $payment_method) : Entity
+    public function setPaymentMethod(PaymentMethod $payment_method) : Entity
     {
         $this->payment_method = $payment_method;
         return $this;
@@ -155,9 +155,9 @@ class Entity
     /**
      * Retrieve payment method
      *
-     * @return string
+     * @return PaymentMethod
      */
-    public function getPaymentMethod() : string
+    public function getPaymentMethod() : PaymentMethod
     {
         return $this->payment_method;
     }
@@ -423,7 +423,7 @@ class Entity
 
         $data = (Object) $required;
 
-        if ($this->hasPaymentMethod()) $this->payment_method = $this->getPaymentMethod();
+        if ($this->hasPaymentMethod()) $data->payment_method = $this->getPaymentMethod()->value;
 
         if ($this->hasMerchant()) $data->merchant = (Object)
         [

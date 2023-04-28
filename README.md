@@ -8,9 +8,13 @@ composer require ezeksoft/rocketzap
 <?php
 
 use Ezeksoft\RocketZap\SDK as RocketZap;
-use Ezeksoft\RocketZap\Enum\{ProjectType, Event};
+use Ezeksoft\RocketZap\Enum\{ProjectType, Event, PaymentMethod};
 
 $rocketzap = RocketZap::SDK('YOUR_ACCESS_TOKEN');
+
+$order = $rocketzap->order()
+    ->setId(1)
+    ->setTotal(149);
 
 $customer = $rocketzap->customer()
     ->setId(1)
@@ -39,13 +43,26 @@ foreach ($products as $product)
 
 $merchant = $rocketzap->merchant()
     ->setId(1)
-    ->setName('RocketPays')
-    ->setEmail('suporte@rocketpays.app');
+    ->setName('Seller Name')
+    ->setEmail('seller@gmail.com');
 
-$rocketzap->setPaymentMethod('pix')
+$rocketzap
+    ->setOrder($order)
+    ->setPaymentMethod(PaymentMethod::PIX)
     ->setCustomer($customer)
     ->setMerchant($merchant)
     ->setEvent(Event::PIX_GENERATED)
     ->save([ProjectType::AUTOMATION]);
+
+list($automation) = $rocketzap->getResponses();
+
+$automation->http
+    ->then(function($response) {
+        echo $response->getText();
+    })
+    ->catch(function($response) {
+        print_r($response->getError());
+    })
+;
 
 ```

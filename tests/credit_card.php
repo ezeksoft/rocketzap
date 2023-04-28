@@ -42,9 +42,11 @@ $merchant = $rocketzap->merchant()
     ->setName('RocketPays')
     ->setEmail('suporte@rocketpays.app');
 
-$billet = $rocketzap->billet()
-    ->setText('23791.22928 60012.299461 68000.046901 3 93350000014900')
-    ->setPdf('https://api.pagar.me/1/boletos/live_clgyaib599tdw01m5mhau0qsv?format=pdf');
+$credit_card = $rocketzap->creditCard()
+    ->setFirstSixDigits("454545")
+    ->setLastFourDigits("0123")
+    ->setFlag("visa")
+    ->setInstallments(6);
 
 $order = $rocketzap->order()
     ->setId(1)
@@ -54,11 +56,11 @@ try
 {
     $rocketzap
         ->setOrder($order)
-        ->setPaymentMethod(PaymentMethod::BILLET)
+        ->setPaymentMethod(PaymentMethod::CREDIT_CARD)
         ->setCustomer($customer)
         ->setMerchant($merchant)
-        ->setBillet($billet)
-        ->setEvent(Event::BILLET_PRINTED)
+        ->setCreditCard($credit_card)
+        ->setEvent(Event::APPROVED) // or Event::REJECTED
         ->save([ProjectType::AUTOMATION]);
 
     list($automation) = $rocketzap->getResponses();
@@ -88,6 +90,11 @@ catch (EventRequiredException $ex)
 }
 
 catch (ProductsRequiredException $ex)
+{
+    echo $ex->getMessage();
+}
+
+catch (OrderRequiredException $ex)
 {
     echo $ex->getMessage();
 }
