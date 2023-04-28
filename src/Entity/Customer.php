@@ -2,9 +2,7 @@
 
 namespace Ezeksoft\RocketZap\Entity;
 
-use Ezeksoft\RocketZap\Entity\Entity;
-
-class Customer implements Entity
+class Customer
 {
     /** @var ?int */
     private ?int $id;

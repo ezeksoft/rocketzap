@@ -4,8 +4,8 @@ namespace Ezeksoft\RocketZap;
 
 use Ezeksoft\RocketZap\Http;
 use Ezeksoft\RocketZap\Enum\{ProjectType, Event};
-use Ezeksoft\RocketZap\Entity\{Customer, Merchant, Product, Pix, Billet};
-use Ezeksoft\RocketZap\Exception\{CustomerRequiredException, EventRequiredException, ProductsRequiredException};
+use Ezeksoft\RocketZap\Entity\{Customer, Merchant, Product, Pix, Billet, CreditCard, Order};
+use Ezeksoft\RocketZap\Exception\{CustomerRequiredException, EventRequiredException, ProductsRequiredException, OrderRequiredException};
 
 class Entity
 {
@@ -38,6 +38,12 @@ class Entity
     
     /** @var Billet */
     private Billet $billet;
+    
+    /** @var CreditCard */
+    private CreditCard $credit_card;
+    
+    /** @var Order */
+    private Order $order;
     
     /** @var array */
     private array $returns = [];
@@ -93,6 +99,26 @@ class Entity
     }
 
     /**
+     * Create new credit card
+     *
+     * @return CreditCard
+     */
+    public function creditCard() : CreditCard
+    {
+        return new CreditCard; 
+    }
+
+    /**
+     * Create new order
+     *
+     * @return Order
+     */
+    public function order() : Order
+    {
+        return new Order; 
+    }
+
+    /**
      * Set key
      *
      * @param string $api_secret
@@ -137,13 +163,13 @@ class Entity
     }
 
     /** @return bool */
-    public function hasPaymentMethod()
+    public function hasPaymentMethod() : bool
     {
         return !empty($this->payment_method);
     }
 
     /** @return bool */
-    public function hasProducts()
+    public function hasProducts() : bool
     {
         return !empty($this->product_list);
     }
@@ -171,7 +197,7 @@ class Entity
     }
 
     /** @return bool */
-    public function hasCustomer()
+    public function hasCustomer() : bool
     {
         return !empty($this->customer);
     }
@@ -199,7 +225,7 @@ class Entity
     }
 
     /** @return bool */
-    public function hasMerchant()
+    public function hasMerchant() : bool
     {
         return !empty($this->merchant);
     }
@@ -214,6 +240,35 @@ class Entity
     {
         $this->product_list[] = $product;
         return $this;
+    }
+
+    /**
+     * Set event
+     * eg: pix_generated, approved, canceled, ...
+     *
+     * @param Event $event
+     * @return Entity
+     */
+    public function setEvent(Event $event) : Entity
+    {
+        $this->event = $event;
+        return $this;
+    }
+
+    /**
+     * Retrieve event
+     *
+     * @return Event
+     */
+    public function getEvent() : Event
+    {
+        return $this->event;
+    }
+
+    /** @return bool */
+    public function hasEvent() : bool
+    {
+        return !empty($this->event);
     }
 
     /**
@@ -239,7 +294,7 @@ class Entity
     }
 
     /** @return bool */
-    public function hasPix()
+    public function hasPix() : bool
     {
         return !empty($this->pix);
     }
@@ -267,38 +322,65 @@ class Entity
     }
 
     /** @return bool */
-    public function hasBillet()
+    public function hasBillet() : bool
     {
         return !empty($this->billet);
     }
 
     /**
-     * Set event
-     * eg: pix_generated, approved, canceled, ...
+     * Set credit card
      *
-     * @param Event $event
+     * @param CreditCard $credit_card
      * @return Entity
      */
-    public function setEvent(Event $event) : Entity
+    public function setCreditCard(CreditCard $credit_card) : Entity
     {
-        $this->event = $event;
+        $this->credit_card = $credit_card;
         return $this;
     }
 
     /**
-     * Retrieve event
+     * Retrieve credit card
      *
-     * @return Event
+     * @return CreditCard
      */
-    public function getEvent() : Event
+    public function getCreditCard() : CreditCard
     {
-        return $this->event;
+        return $this->credit_card;
     }
 
     /** @return bool */
-    public function hasEvent()
+    public function hasCreditCard() : bool
     {
-        return !empty($this->event);
+        return !empty($this->credit_card);
+    }
+
+    /**
+     * Set order
+     *
+     * @param Order $order
+     * @return Entity
+     */
+    public function setOrder(Order $order) : Entity
+    {
+        $this->order = $order;
+        return $this;
+    }
+
+    /**
+     * Retrieve order
+     *
+     * @return Order
+     */
+    public function getOrder() : Order
+    {
+        return $this->order;
+    }
+
+    /** @return bool */
+    public function hasOrder() : bool
+    {
+        return !empty($this->order);
     }
 
     /**
@@ -311,6 +393,7 @@ class Entity
         if (!$this->hasEvent()) throw new EventRequiredException("Event is required.");
         if (!$this->hasCustomer()) throw new CustomerRequiredException("Customer is required.");
         if (!$this->hasProducts()) throw new ProductsRequiredException("Products are required.");
+        if (!$this->hasOrder()) throw new OrderRequiredException("Order is required.");
 
         $required = [
             "event" => $this->getEvent(),
@@ -330,6 +413,11 @@ class Entity
                     "name" => $this->customer->getName(),
                     "email" => $this->customer->getEmail(),
                     "phone" => $this->customer->getPhone()
+                ],
+            "order" => (Object)
+                [
+                    "id" => $this->order->getId(),  
+                    "total" => $this->order->getTotal(),  
                 ]
         ];
 
@@ -356,15 +444,23 @@ class Entity
             "pdf" => $this->billet->getPdf()
         ];
 
+        if ($this->hasCreditCard()) $data->credit_card = (Object)
+        [
+            "first_six_digits" => $this->credit_card->getFirstSixDigits(),
+            "last_four_digits" => $this->credit_card->getLastFourDigits(),
+            "flag" => $this->credit_card->getFlag(),
+            "installments" => $this->credit_card->getInstallments()
+        ];
+
         return $data;
     }
 
     /**
      * Convert mapping to json
      *
-     * @return void
+     * @return string
      */
-    public function getJson()
+    public function getJson() : string
     {
         return json_encode($this->getMapping());
     }
@@ -373,7 +469,7 @@ class Entity
      * Dispatch event
      *
      * @param array<ProjectType> $project_types
-     * @return void
+     * @return Entity
      */
     public function save(array $project_types) : Entity
     {
@@ -440,9 +536,9 @@ class Entity
     /**
      * Retrieve endpoint
      *
-     * @return void
+     * @return string
      */
-    public function getEndpoint()
+    public function getEndpoint() : string
     {
         return $this->endpoint;
     }
@@ -451,7 +547,7 @@ class Entity
      * Create an http request
      *
      * @param Mixed ...$arguments
-     * @return void
+     * @return Http
      */
     private function request(...$arguments) : Http
     {

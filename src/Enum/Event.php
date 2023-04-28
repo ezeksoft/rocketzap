@@ -9,4 +9,5 @@ enum Event : int
     case APPROVED = 3;
     case CANCELED = 4;
     case REFUNDED = 5;
+    case REJECTED = 6;
 }

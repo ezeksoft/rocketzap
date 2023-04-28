@@ -2,7 +2,7 @@
 
 namespace Ezeksoft\RocketZap\Entity;
 
-class Product implements Entity
+class Product
 {
     /**
      * Product ID

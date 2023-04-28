@@ -2,8 +2,6 @@
 
 namespace Ezeksoft\RocketZap\Entity;
 
-use Ezeksoft\RocketZap\Entity\Entity;
-
 class Pix
 {
     /** @var string */

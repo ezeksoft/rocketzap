@@ -42,11 +42,6 @@ class Http
         return $this;
     }
 
-    public function getJson()
-    {
-        return json_encode($this->response ?? '{}');
-    }
-
     public function then(\Closure $callback) : Http
     {
         if (!$this->error)
@@ -85,5 +80,15 @@ class Http
     public function getErrorCode() : int
     {
         return $this->errno;
+    }
+
+    public function getJson()
+    {
+        return json_encode($this->response ?? '{}');
+    }
+
+    public function getResponse() : string
+    {
+        return $this->response;
     }
 }
