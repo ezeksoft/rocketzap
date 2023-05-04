@@ -82,7 +82,7 @@ class Http
         return $this->errno;
     }
 
-    public function getJson()
+    public function getJson() : string
     {
         return json_encode($this->response ?? '{}');
     }
