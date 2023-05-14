@@ -11,4 +11,5 @@ enum Event : int
     case REFUNDED = 5;
     case REJECTED = 6;
     case CHARGEDBACK = 7;
+    case PENDING = 8;
 }

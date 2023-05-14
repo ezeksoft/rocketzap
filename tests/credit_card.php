@@ -5,6 +5,7 @@ namespace MyApp;
 require 'autoload.php';
 
 use Ezeksoft\RocketZap\SDK as RocketZap;
+use Ezeksoft\RocketZap\Http;
 use Ezeksoft\RocketZap\Enum\{ProjectType, Event, PaymentMethod};
 use Ezeksoft\RocketZap\Exception\{CustomerRequiredException, EventRequiredException, ProductsRequiredException, OrderRequiredException};
 
@@ -60,20 +61,20 @@ try
         ->setCustomer($customer)
         ->setMerchant($merchant)
         ->setCreditCard($credit_card)
-        ->setEvent(Event::APPROVED) // or Event::REJECTED
+        ->setEvent(Event::APPROVED) // or Event::REJECTED or Event::PENDING
         ->save([ProjectType::AUTOMATION]);
 
     list($automation) = $rocketzap->getResponses();
 
     $type = $automation->type;
     $automation->http
-        ->then(function($response) use ($type, $rocketzap) {
+        ->then(function(Http $response) use ($type, $rocketzap) {
             $json = $response->getJson();
             print_r("type: ". $type."\n\n");
             print_r("request: ". $rocketzap->getJson()."\n\n");
             print_r("response: ".$response->getText());
         })
-        ->catch(function($response) {
+        ->catch(function(Http $response) {
             print_r($response->getError());
         })
     ;
