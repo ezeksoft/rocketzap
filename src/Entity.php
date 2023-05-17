@@ -4,7 +4,7 @@ namespace Ezeksoft\RocketZap;
 
 use Ezeksoft\RocketZap\Http;
 use Ezeksoft\RocketZap\Enum\{ProjectType, Event, PaymentMethod};
-use Ezeksoft\RocketZap\Entity\{Customer, Merchant, Product, Pix, Billet, CreditCard, Order};
+use Ezeksoft\RocketZap\Entity\{Customer, Merchant, Product, Pix, Billet, CreditCard, Order, Message};
 use Ezeksoft\RocketZap\Exception\{CustomerRequiredException, EventRequiredException, ProductsRequiredException, OrderRequiredException};
 
 class Entity
@@ -45,8 +45,14 @@ class Entity
     /** @var Order */
     private Order $order;
     
+    /** @var Message */
+    private Message $message;
+    
     /** @var array */
     private array $returns = [];
+    
+    /** @var string */
+    private string $session = "";
 
     /**
      * Create new customer
@@ -116,6 +122,16 @@ class Entity
     public function order() : Order
     {
         return new Order; 
+    }
+
+    /**
+     * Create new message
+     *
+     * @return Message
+     */
+    public function message() : Message
+    {
+        return new Message; 
     }
 
     /**
@@ -384,72 +400,130 @@ class Entity
     }
 
     /**
+     * Set session
+     *
+     * @param string $session
+     * @return string
+     */
+    public function setSession(string $session) : Entity
+    {
+        $this->session = $session;
+        return $this;
+    }
+
+    /**
+     * Retrieve session
+     *
+     * @return string
+     */
+    public function getSession() : string
+    {
+        return $this->session;
+    }
+
+    /** @return bool */
+    public function hasSession() : bool
+    {
+        return !empty($this->session);
+    }
+
+    /**
+     * Set message
+     *
+     * @param Message $message
+     * @return Message
+     */
+    public function setMessage(Message $message) : Entity
+    {
+        $this->message = $message;
+        return $this;
+    }
+
+    /**
+     * Retrieve message
+     *
+     * @return Message
+     */
+    public function getMessage() : Message
+    {
+        return $this->message;
+    }
+
+    /** @return bool */
+    public function hasMessage() : bool
+    {
+        return !empty($this->message);
+    }
+
+    /**
      * Retrieve mapping
      *
      * @return object
      */
     public function getMapping() : object
     {
-        if (!$this->hasEvent()) throw new EventRequiredException("Event is required.");
+        // if (!$this->hasEvent()) throw new EventRequiredException("Event is required.");
         if (!$this->hasCustomer()) throw new CustomerRequiredException("Customer is required.");
-        if (!$this->hasProducts()) throw new ProductsRequiredException("Products are required.");
-        if (!$this->hasOrder()) throw new OrderRequiredException("Order is required.");
+        // if (!$this->hasProducts()) throw new ProductsRequiredException("Products are required.");
+        // if (!$this->hasOrder()) throw new OrderRequiredException("Order is required.");
 
-        $required = [
-            "event" => $this->getEvent(),
-            "products" => array_map(fn($product) => 
-                (Object) 
-                    [
-                        "id" => $product->getId(),
-                        "name" => $product->getName(),
-                        "price" => $product->getPrice()
-                    ]
-                , $this->product_list),
-            "customer" => (Object)
-                [
-                    "id" => $this->customer->getId(),
-                    "first_name" => $this->customer->getFirstName(),
-                    "last_name" => $this->customer->getLastName(),
-                    "name" => $this->customer->getName(),
-                    "email" => $this->customer->getEmail(),
-                    "phone" => $this->customer->getPhone()
-                ],
-            "order" => (Object)
-                [
-                    "id" => $this->order->getId(),  
-                    "total" => $this->order->getTotal(),  
-                ]
+        $data = (object) [];
+
+        if ($this->hasOrder()) $data->order = (object)
+        [
+            "id" => $this->order->getId(),  
+            "total" => $this->order->getTotal(),  
         ];
-
-        $data = (Object) $required;
-
+        if ($this->hasProducts()) $data->products = array_map(fn($product) => (object) 
+        [
+            "id" => $product->getId(),
+            "name" => $product->getName(),
+            "price" => $product->getPrice()
+        ]
+        , $this->product_list);
+        if ($this->hasEvent()) $data->event = $this->getEvent();
+        if ($this->hasCustomer()) $data->customer = (object)
+        [
+            "id" => $this->customer->getId(),
+            "first_name" => $this->customer->getFirstName(),
+            "last_name" => $this->customer->getLastName(),
+            "name" => $this->customer->getName(),
+            "email" => $this->customer->getEmail(),
+            "phone" => $this->customer->getPhone()
+        ];
         if ($this->hasPaymentMethod()) $data->payment_method = $this->getPaymentMethod()->value;
 
-        if ($this->hasMerchant()) $data->merchant = (Object)
+        if ($this->hasMerchant()) $data->merchant = (object)
         [
             "id" => $this->merchant->getId(),
             "name" => $this->merchant->getName(),
             "email" => $this->merchant->getEmail()
         ];
 
-        if ($this->hasPix()) $data->pix = (Object)
+        if ($this->hasPix()) $data->pix = (object)
         [
             "text" => $this->pix->getText(),
             "image" => $this->pix->getImage()
         ];
 
-        if ($this->hasBillet()) $data->billet = (Object)
+        if ($this->hasBillet()) $data->billet = (object)
         [
             "text" => $this->billet->getText(),
             "pdf" => $this->billet->getPdf()
         ];
 
-        if ($this->hasCreditCard()) $data->credit_card = (Object)
+        if ($this->hasCreditCard()) $data->credit_card = (object)
         [
             "first_six_digits" => $this->credit_card->getFirstSixDigits(),
             "last_four_digits" => $this->credit_card->getLastFourDigits(),
             "flag" => $this->credit_card->getFlag(),
             "installments" => $this->credit_card->getInstallments()
+        ];
+
+        if ($this->hasMessage()) $data->message = (object)
+        [
+            "type" => $this->message->getType(),
+            "content" => $this->message->getContent()
         ];
 
         return $data;
@@ -491,17 +565,32 @@ class Entity
                     body: $body
                 );
 
-                $returns[] = (Object)
+                $returns[] = (object)
                 [
                     "type" => $project_type->value,
                     "http" => $http
                 ];
             }
-            
-            // if ($project_type == ProjectType::CAMPAIGN)
-            // {
-            //     // do stuff...
-            // }
+
+            if ($project_type == ProjectType::INSTANTLY)
+            {
+                $http = $this->request(
+                    verb: "POST", 
+                    resource: "/whatsapp/send", 
+                    headers: [
+                        "Authorization" => "Bearer ".$this->getApiSecret(),
+                        "Content-Type" => "application/json",
+                        "Session" => $this->getSession()
+                    ],
+                    body: $body
+                );
+
+                $returns[] = (object)
+                [
+                    "type" => $project_type->value,
+                    "http" => $http
+                ];
+            }
 
             $http = null;
         }

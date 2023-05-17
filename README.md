@@ -3,7 +3,41 @@
 composer require ezeksoft/rocketzap
 ```
 
-### Example
+### Simple Example
+```php
+<?php
+
+use Ezeksoft\RocketZap\
+{SDK as RocketZap, Http, Enum\ProjectType, Exception\CustomerRequiredException};
+
+$rocketzap = RocketZap::SDK('YOUR_ACCESS_TOKEN');
+$rocketzap->setSession('YOUR_SESSION');
+
+$rocketzap
+    ->setCustomer($rocketzap->customer()->setId(1)->setPhone('5511900000000'))
+    ->setMessage($rocketzap->message()->setText("Test message"))
+    ->save([ProjectType::INSTANTLY]);
+
+```
+
+### Get Response
+```php
+<?php
+list($instantly) = $rocketzap->getResponses();
+
+$instantly->http
+    ->then(function(Http $response) use ($rocketzap) {
+        print_r("request: ".$rocketzap->getJson()."\n\n");
+        print_r("response text: ".$response->getText());
+        print_r("response json: ".$response->getJson());
+    })
+    ->catch(function(Http $response) {
+        print_r($response->getError());
+    })
+;
+```
+
+### Automation Example
 ```php
 <?php
 
