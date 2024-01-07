@@ -10,7 +10,7 @@ use Ezeksoft\RocketZap\Exception\{CustomerRequiredException, EventRequiredExcept
 class Entity
 {
     /** @var string */
-    private string $endpoint = "https://rocketzap.app/api";
+    private string $endpoint = "https://dashboard.rocketzap.app/api";
 
     /** @var string */
     protected string $api_secret = "";
